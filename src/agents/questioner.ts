@@ -1,1 +1,275 @@
-/**n * Spectre AI Assistant - Questioner Agentn * Handles intelligent questioning and context gatheringn */nnimport { v4 as uuidv4 } from 'uuid';nimport { IAgent, AgentType, AgentContext, AgentResult, Project, Question, QuestionAnswer, QuestionType, ProjectType } from '../utils/types';nimport { spectreLogger } from '../core/logger';nimport { config } from '../core/config';nn/**n * Questioner Agent Implementationn */nexport const questioner: IAgent = {n  type: 'questioner',n  name: 'Questioner',n  description: 'Intelligent questioning agent that gathers context and requirements',n  capabilities: [n    'context_analysis',n    'question_generation',n    'answer_validation',n    'pattern_learning',n    'session_management'n  ],n  isActive: true,n  version: '1.0.0',nn  /**n   * Execute the questioner agentn   */n  async execute(context: AgentContext): Promise<AgentResult> {n    const startTime = Date.now();n    const { projectId, project } = context;nn    try {n      spectreLogger.success('questioner', 'execution_started', undefined, projectId,n        'Questioner agent execution started', 'analyzing_project_context',n        { projectType: project.type, projectName: project.name });nn      // Generate questions based on project typen      const questions = await this.generateQuestions(project);nn      // Store questions in project contextn      project.answers = [];n      project.status = 'questioning';nn      spectreLogger.success('questioner', 'questions_generated', undefined, projectId,n        `Generated ${questions.length} questions for ${project.type} project`, 'questions_ready',n        { questionCount: questions.length, projectType: project.type });nn      const duration = Date.now() - startTime;nn      return {n        success: true,n        data: {n          questions,n          projectStatus: project.status,n          estimatedDuration: this.estimateQuestioningDuration(questions.length),n        },n        metadata: {n          questionCount: questions.length,n          duration,n          projectType: project.type,n        },n        nextStep: 'planner',n      };nn    } catch (error) {n      const duration = Date.now() - startTime;n      spectreLogger.failure('questioner', 'execution_failed', n        error instanceof Error ? error.message : String(error), projectId,n        'Questioner agent execution failed', 'error_handled',n        { duration, projectType: project.type });nn      return {n        success: false,n        error: error instanceof Error ? error.message : String(error),n        metadata: { duration, projectType: project.type },n      };n    }n  },nn  /**n   * Check if this agent can handle the given stepn   */n  canHandle(step: any): boolean {n    return step.type === 'question' || step.agent === 'questioner';n  },nn  /**n   * Generate questions based on project typen   */n  private async generateQuestions(project: Project): Promise<Question[]> {n    const questions: Question[] = [];n    const baseQuestions = this.getBaseQuestions();n    const typeSpecificQuestions = this.getTypeSpecificQuestions(project.type);nn    // Add base questionsn    questions.push(...baseQuestions);nn    // Add type-specific questionsn    questions.push(...typeSpecificQuestions);nn    // Sort questions by ordern    questions.sort((a, b) => a.order - b.order);nn    return questions;n  },nn  /**n   * Get base questions for all project typesn   */n  private getBaseQuestions(): Question[] {n    return [n      {n        id: uuidv4(),n        text: 'What is the primary goal of this project?',n        type: 'text' as QuestionType,n        required: true,n        order: 1,n        validation: { minLength: 10, maxLength: 500 },n      },n      {n        id: uuidv4(),n        text: 'Who is the target audience?',n        type: 'text' as QuestionType,n        required: true,n        order: 2,n        validation: { minLength: 5, maxLength: 200 },n      },n      {n        id: uuidv4(),n        text: 'What is your timeline for completion?',n        type: 'select' as QuestionType,n        required: true,n        order: 3,n        options: ['1-2 weeks', '1 month', '2-3 months', '3+ months'],n      },n      {n        id: uuidv4(),n        text: 'What is your budget range?',n        type: 'select' as QuestionType,n        required: false,n        order: 4,n        options: ['$0-500', '$500-2000', '$2000-5000', '$5000+'],n      },n      {n        id: uuidv4(),n        text: 'Do you have any specific design preferences?',n        type: 'text' as QuestionType,n        required: false,n        order: 5,n        validation: { maxLength: 300 },n      },n    ];n  },nn  /**n   * Get type-specific questionsn   */n  private getTypeSpecificQuestions(projectType: ProjectType): Question[] {n    if (projectType === 'website') {n      return this.getWebsiteQuestions();n    } else {n      return this.getAutomationQuestions();n    }n  },nn  /**n   * Get questions specific to website projectsn   */n  private getWebsiteQuestions(): Question[] {n    return [n      {n        id: uuidv4(),n        text: 'What type of website do you need?',n        type: 'select' as QuestionType,n        required: true,n        order: 6,n        options: ['Portfolio', 'Business', 'E-commerce', 'Blog', 'Landing Page', 'Web App'],n      },n      {n        id: uuidv4(),n        text: 'Do you need user authentication?',n        type: 'boolean' as QuestionType,n        required: true,n        order: 7,n      },n      {n        id: uuidv4(),n        text: 'Do you need a content management system (CMS)?',n        type: 'boolean' as QuestionType,n        required: true,n        order: 8,n      },n      {n        id: uuidv4(),n        text: 'What features are most important?',n        type: 'multiselect' as QuestionType,n        required: false,n        order: 9,n        options: ['Contact Form', 'Blog', 'Gallery', 'Search', 'Analytics', 'SEO Optimization'],n      },n      {n        id: uuidv4(),n        text: 'Do you have existing content or assets?',n        type: 'text' as QuestionType,n        required: false,n        order: 10,n        validation: { maxLength: 200 },n      },n    ];n  },nn  /**n   * Get questions specific to automation projectsn   */n  private getAutomationQuestions(): Question[] {n    return [n      {n        id: uuidv4(),n        text: 'What type of automation do you need?',n        type: 'select' as QuestionType,n        required: true,n        order: 6,n        options: ['Data Processing', 'File Management', 'API Integration', 'Scheduling', 'Monitoring', 'Reporting'],n      },n      {n        id: uuidv4(),n        text: 'What systems need to be integrated?',n        type: 'multiselect' as QuestionType,n        required: true,n        order: 7,n        options: ['Email', 'CRM', 'Database', 'Cloud Storage', 'Social Media', 'Analytics'],n      },n      {n        id: uuidv4(),n        text: 'How often should the automation run?',n        type: 'select' as QuestionType,n        required: true,n        order: 8,n        options: ['Real-time', 'Hourly', 'Daily', 'Weekly', 'Monthly'],n      },n      {n        id: uuidv4(),n        text: 'Do you need error handling and notifications?',n        type: 'boolean' as QuestionType,n        required: true,n        order: 9,n      },n      {n        id: uuidv4(),n        text: 'What is the expected data volume?',n        type: 'select' as QuestionType,n        required: false,n        order: 10,n        options: ['Low (< 100 records)', 'Medium (100-1000 records)', 'High (1000+ records)'],n      },n    ];n  },nn  /**n   * Estimate how long questioning will taken   */n  private estimateQuestioningDuration(questionCount: number): number {n    // Base time per question (in minutes)n    const baseTimePerQuestion = 2;n    // Additional time for complex questionsn    const complexityMultiplier = 1.5;n    return Math.round(questionCount * baseTimePerQuestion * complexityMultiplier);n  },n};
+/**
+ * Questioner Agent
+ * Manages question patterns and user interaction sessions
+ */
+
+import { Agent, QuestionPattern, QuestionSession, ProjectType } from '@/utils/types';
+import { spectreLogger } from '@/core/logger';
+
+/**
+ * Questioner Agent Implementation
+ */
+class QuestionerAgent implements Agent {
+  public readonly name = 'questioner';
+  public readonly description = 'Asks context-relevant questions using learned patterns';
+  public readonly version = '1.0.0';
+
+  private questionPatterns: Map<string, QuestionPattern> = new Map();
+  private activeSessions: Map<string, QuestionSession> = new Map();
+
+  constructor() {
+    this.initializeDefaultPatterns();
+  }
+
+  /**
+   * Initialize default question patterns
+   */
+  private initializeDefaultPatterns(): void {
+    // Website patterns
+    this.questionPatterns.set('website_basic', {
+      id: 'website_basic',
+      type: 'website',
+      questions: [
+        'What is the primary purpose of this website?',
+        'Who is your target audience?',
+        'What are the main features you want?',
+        'Do you have any design preferences or brand guidelines?',
+        'What content management needs do you have?',
+        'Do you need user authentication?',
+        'What integrations are required?',
+        'What is your timeline for completion?',
+        'Do you have a budget range?',
+        'What is your preferred tech stack?'
+      ],
+      required: true,
+      order: 1
+    });
+
+    // Automation patterns
+    this.questionPatterns.set('automation_basic', {
+      id: 'automation_basic',
+      type: 'automation',
+      questions: [
+        'What process are you looking to automate?',
+        'What triggers should start the automation?',
+        'What actions should the automation perform?',
+        'What systems or tools need to be integrated?',
+        'How often should this automation run?',
+        'What data needs to be processed?',
+        'Are there any error handling requirements?',
+        'What notifications or alerts are needed?',
+        'What is the expected volume of operations?',
+        'Do you need reporting or analytics?'
+      ],
+      required: true,
+      order: 1
+    });
+
+    // Advanced patterns
+    this.questionPatterns.set('website_advanced', {
+      id: 'website_advanced',
+      type: 'website',
+      questions: [
+        'What SEO requirements do you have?',
+        'Do you need analytics integration?',
+        'What security requirements are needed?',
+        'Do you need multi-language support?',
+        'What performance requirements do you have?',
+        'Do you need mobile responsiveness?',
+        'What backup and recovery needs exist?',
+        'Do you need API endpoints?',
+        'What third-party integrations?',
+        'What compliance requirements exist?'
+      ],
+      required: false,
+      order: 2
+    });
+
+    this.questionPatterns.set('automation_advanced', {
+      id: 'automation_advanced',
+      type: 'automation',
+      questions: [
+        'What error recovery mechanisms are needed?',
+        'Do you need audit logging?',
+        'What performance requirements exist?',
+        'Do you need conditional logic?',
+        'What data validation is required?',
+        'Do you need retry mechanisms?',
+        'What monitoring and alerting?',
+        'Do you need data transformation?',
+        'What compliance requirements exist?',
+        'Do you need user approval workflows?'
+      ],
+      required: false,
+      order: 2
+    });
+  }
+
+  /**
+   * Start a new question session
+   */
+  public async startSession(projectId: string, projectType: ProjectType): Promise<QuestionSession> {
+    spectreLogger.success('questioner', 'session_started', undefined, projectId,
+      `Starting question session for ${projectType} project`, 'session_created');
+
+    const session: QuestionSession = {
+      id: `session_${projectId}_${Date.now()}`,
+      projectId,
+      projectType,
+      currentPattern: 0,
+      answers: new Map(),
+      patterns: this.getPatternsForType(projectType),
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.activeSessions.set(session.id, session);
+
+    spectreLogger.success('questioner', 'session_ready', undefined, projectId,
+      `Question session ready with ${session.patterns.length} patterns`, 'awaiting_questions');
+
+    return session;
+  }
+
+  /**
+   * Get next question for a session
+   */
+  public async getNextQuestion(sessionId: string): Promise<string | null> {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+
+    const currentPattern = session.patterns[session.currentPattern];
+    if (!currentPattern) {
+      return null; // All questions completed
+    }
+
+    const currentQuestionIndex = session.answers.get(currentPattern.id)?.length || 0;
+    const question = currentPattern.questions[currentQuestionIndex];
+
+    if (!question) {
+      // Move to next pattern
+      session.currentPattern++;
+      return this.getNextQuestion(sessionId);
+    }
+
+    spectreLogger.success('questioner', 'question_generated', undefined, session.projectId,
+      `Generated question: ${question.substring(0, 50)}...`, 'question_ready');
+
+    return question;
+  }
+
+  /**
+   * Submit an answer to a question
+   */
+  public async submitAnswer(sessionId: string, answer: string): Promise<void> {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+
+    const currentPattern = session.patterns[session.currentPattern];
+    if (!currentPattern) {
+      throw new Error('No active pattern for session');
+    }
+
+    // Store the answer
+    if (!session.answers.has(currentPattern.id)) {
+      session.answers.set(currentPattern.id, []);
+    }
+    session.answers.get(currentPattern.id)!.push(answer);
+
+    session.updatedAt = new Date();
+
+    spectreLogger.success('questioner', 'answer_submitted', undefined, session.projectId,
+      `Answer submitted for pattern ${currentPattern.id}`, 'answer_stored');
+
+    // Check if pattern is complete
+    const patternAnswers = session.answers.get(currentPattern.id) || [];
+    if (patternAnswers.length >= currentPattern.questions.length) {
+      session.currentPattern++;
+      spectreLogger.success('questioner', 'pattern_completed', undefined, session.projectId,
+        `Pattern ${currentPattern.id} completed`, 'moving_to_next_pattern');
+    }
+  }
+
+  /**
+   * Get session status
+   */
+  public async getSessionStatus(sessionId: string): Promise<QuestionSession | null> {
+    return this.activeSessions.get(sessionId) || null;
+  }
+
+  /**
+   * Complete a session
+   */
+  public async completeSession(sessionId: string): Promise<Map<string, string[]>> {
+    const session = this.activeSessions.get(sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+
+    session.status = 'completed';
+    session.updatedAt = new Date();
+
+    // Convert answers to a more usable format
+    const allAnswers = new Map<string, string[]>();
+    for (const [patternId, answers] of session.answers) {
+      allAnswers.set(patternId, [...answers]);
+    }
+
+    spectreLogger.success('questioner', 'session_completed', undefined, session.projectId,
+      `Question session completed with ${allAnswers.size} patterns`, 'session_finalized');
+
+    return allAnswers;
+  }
+
+  /**
+   * Get patterns for a specific project type
+   */
+  private getPatternsForType(projectType: ProjectType): QuestionPattern[] {
+    const patterns: QuestionPattern[] = [];
+    
+    for (const pattern of this.questionPatterns.values()) {
+      if (pattern.type === projectType) {
+        patterns.push(pattern);
+      }
+    }
+
+    // Sort by order
+    return patterns.sort((a, b) => a.order - b.order);
+  }
+
+  /**
+   * Add a new question pattern
+   */
+  public async addPattern(pattern: QuestionPattern): Promise<void> {
+    this.questionPatterns.set(pattern.id, pattern);
+    
+    spectreLogger.success('questioner', 'pattern_added', undefined, undefined,
+      `Added new question pattern: ${pattern.id}`, 'pattern_registered');
+  }
+
+  /**
+   * Get all patterns
+   */
+  public async getAllPatterns(): Promise<QuestionPattern[]> {
+    return Array.from(this.questionPatterns.values());
+  }
+
+  /**
+   * Get agent health status
+   */
+  public async getHealth(): Promise<{ status: string; patterns: number; activeSessions: number }> {
+    return {
+      status: 'healthy',
+      patterns: this.questionPatterns.size,
+      activeSessions: this.activeSessions.size
+    };
+  }
+}
+
+// Export singleton instance
+export const questioner = new QuestionerAgent();
