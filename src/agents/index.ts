@@ -1,1 +1,37 @@
-/**n * Spectre AI Assistant - Agent Registryn * Exports all agents and provides utility functionsn */nnimport { questioner } from './questioner';nimport { planner } from './planner';nimport { executor } from './executor';nimport { reviewer } from './reviewer';nimport { validator } from './validator';nimport { Agent, AgentType } from '../utils/types';nn/**n * Agent registry containing all available agentsn */nexport const agents = {n  questioner,n  planner,n  executor,n  reviewer,n  validator,n};nn/**n * Get agent by typen */nexport function getAgent(type: AgentType): Agent | undefined {n  return agents[type as keyof typeof agents];n}nn/**n * Get all agentsn */nexport function getAllAgents(): Agent[] {n  return Object.values(agents);n}nn/**n * Check if agent existsn */nexport function hasAgent(type: AgentType): boolean {n  return type in agents;n}nn/**n * Get agent capabilitiesn */nexport function getAgentCapabilities(type: AgentType): string[] {n  const agent = getAgent(type);n  return agent ? agent.capabilities : [];n}nn// Export individual agents for direct importnexport { questioner } from './questioner';nexport { planner } from './planner';nexport { executor } from './executor';nexport { reviewer } from './reviewer';nexport { validator } from './validator';
+/**
+ * Agent Registry
+ * Exports all agents for use by the orchestrator
+ */
+
+import { questioner } from './questioner';
+import { planner } from './planner';
+import { executor } from './executor';
+import { reviewer } from './reviewer';
+import { validator } from './validator';
+
+/**
+ * Agent registry object
+ * Contains all available agents
+ */
+export const agents = {
+  questioner,
+  planner,
+  executor,
+  reviewer,
+  validator
+};
+
+/**
+ * Get all agents as an array
+ */
+export const getAllAgents = () => Object.values(agents);
+
+/**
+ * Get agent by name
+ */
+export const getAgent = (name: string) => agents[name as keyof typeof agents];
+
+/**
+ * Get agent names
+ */
+export const getAgentNames = () => Object.keys(agents);
