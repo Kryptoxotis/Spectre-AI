@@ -1,1 +1,51 @@
-{n  "compilerOptions": {n    "target": "ES2022",n    "module": "commonjs",n    "lib": ["ES2022"],n    "outDir": "./dist",n    "rootDir": "./src",n    "strict": true,n    "esModuleInterop": true,n    "skipLibCheck": true,n    "forceConsistentCasingInFileNames": true,n    "resolveJsonModule": true,n    "declaration": true,n    "declarationMap": true,n    "sourceMap": true,n    "removeComments": false,n    "noImplicitAny": true,n    "noImplicitReturns": true,n    "noImplicitThis": true,n    "noUnusedLocals": true,n    "noUnusedParameters": true,n    "exactOptionalPropertyTypes": true,n    "noImplicitOverride": true,n    "noPropertyAccessFromIndexSignature": true,n    "noUncheckedIndexedAccess": true,n    "allowUnusedLabels": false,n    "allowUnreachableCode": false,n    "baseUrl": "./src",n    "paths": {n      "@/*": ["*"],n      "@/core/*": ["core/*"],n      "@/agents/*": ["agents/*"],n      "@/integrations/*": ["integrations/*"],n      "@/learning/*": ["learning/*"],n      "@/web/*": ["web/*"],n      "@/utils/*": ["utils/*"]n    }n  },n  "include": [n    "src/**/*"n  ],n  "exclude": [n    "node_modules",n    "dist",n    "**/*.test.ts",n    "**/*.spec.ts"n  ],n  "ts-node": {n    "require": ["tsconfig-paths/register"]n  }n}
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@/core/*": ["core/*"],
+      "@/agents/*": ["agents/*"],
+      "@/integrations/*": ["integrations/*"],
+      "@/learning/*": ["learning/*"],
+      "@/web/*": ["web/*"],
+      "@/utils/*": ["utils/*"]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}
